@@ -7,6 +7,7 @@ from __future__ import division
 import nuke
 import os
 import shutil
+
 import sys
 import fileinput
 
