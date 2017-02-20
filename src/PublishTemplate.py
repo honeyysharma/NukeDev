@@ -1,12 +1,14 @@
 """
 Created on Feburary 14, 2017
-
-@author: hsharma
+@author: sharmah
 """
 
+from __future__ import division
 import nuke
 import os
 import shutil
+import sys
+import fileinput
 
 ## GUI code
 def showPublishTemplatePanel():
@@ -73,6 +75,9 @@ def publishTemplate(outputPath, scriptName, nodes):
     #new script
     newScriptName = outputPath + scriptName + '.nk'
 
+    ### PROGRESS TASK
+    progTask = nuke.ProgressTask("Publishing...")
+
     ##Iterate through given nodes
     for node in nodes:
         # Grab file path
@@ -115,14 +120,47 @@ def publishTemplate(outputPath, scriptName, nodes):
 
             #copy the files into sq folders by looping over frame range
             for frame in range(firstFrame, lastFrame+1):
+                ### PROGRESS DIALOG .. if the publish task is cancelled
+                if progTask.isCancelled():
+                    nuke.message("Publishing media might be incomplete")
+                    break;
+
+                #var for progress percentage
+                percent = int((frame / lastFrame) * 100)
+
+                #set progress
+                progTask.setProgress(percent)
+
                 currentFile = sqFolder + sqNameDot + str(frame).zfill(padd) + mediaExtension
 
                 copyFile = sqNameDot + str(frame).zfill(padd) + mediaExtension
 
                 #copy the files
                 shutil.copyfile(currentFile, copyFile)
+
+                ### Current media in progress
+                progTask.setMessage("Publishing: " + sqNameDot + str(frame).zfill(padd) + mediaExtension)
+
+            #open the script to replace the path
+            for i, line in enumerate(fileinput.input(newScriptName, inplace = 1)):
+                sys.stdout.write(line.replace(filePath,
+                                              '\ "\\[file dirname\\[value.root.name]]/' +
+                                              'Sources/' + sqName + '/' + sqNameDot +
+                                              '%04d' + mediaExtension + '\"'))
+
+        #still images
         else:
-            print 'This is not a sq'
+            #change to sources folder
+            os.chdir(outputPath + 'Sources')
+
+            #copy the stills
+            shutil.copyfile(filePath, mediafile)
+
+            #open the script to replace the path
+            for i, line in enumerate(fileinput.input(newScriptName, inplace = 1)):
+                sys.stdout.write(line.replace(filePath,
+                                              '\ "\\[file dirname\\[value.root.name]]/' +
+                                              'Sources/' + mediafile + '\"'))
 
 
 
@@ -131,6 +169,10 @@ def main():
     data = showPublishTemplatePanel()
 
     #publish template at user selected path
-    publishTemplate(data[0], data[1], data[2])
+    ## Check for errors
 
-main()
+    if showPublishTemplatePanel() != None:
+        publishTemplate(data[0], data[1], data[2])
+
+### calling main function
+#main()
