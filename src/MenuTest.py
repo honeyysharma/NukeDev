@@ -3,15 +3,8 @@ import Experiments
 templates = Experiments.getTemplates()[0]
 templateDict = Experiments.getTemplates()[1]
 
-def template():
-    if templates:
-        for template in templates:
-            yield template
+nukeMenu = nuke.menu('Nuke')
+miaTemplatesMenu = nukeMenu.addMenu("MIA Templates")
 
-templateGen = template()
-
-for i in range(0, len(templates)):
-    #print "MIA Templates/" + template.next()
-    #filename = templateDict[template.next()]
-    templateName = templateGen.next()
-    nuke.menu('Nuke').addCommand("MIA Templates/" + templateName, "nuke.message(templateDict[templateName])")
+for template in templates:
+    miaTemplatesMenu.addCommand(template,lambda template=template: nuke.scriptReadFile(templateDict[template]))
