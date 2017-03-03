@@ -1,3 +1,23 @@
+import DynamicTemplate
+import Experiments
+
+nuke.menu('Nodes').addCommand("Backdrop", "nukescripts.autoBackdrop()")
+
+nukeMenu = nuke.menu('Nuke')
+miaTemplatesMenu = nukeMenu.addMenu("MIA Templates")
+
+miaTemplatesMenu.addCommand("Dynamic/Envir", 'DynamicTemplate.showTemplatePanel("ENVIR")')
+miaTemplatesMenu.addCommand("Dynamic/Char", 'DynamicTemplate.showTemplatePanel("CHAR")')
+miaTemplatesMenu.addCommand("Dynamic/Crowd", 'DynamicTemplate.showTemplatePanel("CROWD")')
+
+templates = Experiments.getTemplates()[0]
+templateDict = Experiments.getTemplates()[1]
+
+if templates:
+    for template in templates:
+        miaTemplatesMenu.addCommand(template,lambda template=template: nuke.scriptReadFile(templateDict[template]))
+
+"""
 import PublishTemplate
 
 #add to the left tool bar
@@ -10,3 +30,4 @@ menuBar.addCommand('Edit/PublishTemplate','PublishTemplate.main()', icon = 'imag
 
 #add to the right click menu of node graph
 nuke.menu('Node Graph').addCommand('PublishTemplate','PublishTemplate.main()')
+"""
