@@ -71,67 +71,39 @@ def getTemplateList():
     return templateList
 
 def buildCompScript():
-    for template in getTemplateList():
-        print template
+    # get nuke script to build
+    # nuke.scriptOpen(inScript)
 
-    #get nuke script to build
-    #nuke.scriptOpen(inScript)
+    # arrange templates in the given nuke script in vertical order
+    templates = getTemplateList()
 
-    #arrange templates in the given nuke script in vertical order
-    """
-    node = nuke.toNode("BackdropNode1")
-    print node.height(), node.width()
-    print node.screenHeight(), node.screenWidth()
+    for i, template in enumerate(templates):
+        nuke.scriptReadFile(template)
+        nuke.selectAll()
+        node = nuke.selectedNodes("BackdropNode")[0]
 
-    width = node.screenWidth()
-    height = node.screenHeight()
-    ypos = node.ypos()
-    xpos = node.xpos()
+        if i > 0:
+            bdNodes = node.getNodes()
+            nodePrevX = node.xpos()
+            nodePrevY = node.ypos()
+            node.setYpos(previousNode.ypos() + 500)
+            node.setXpos(previousNode.xpos())
 
-    for i in range(1,4):
-        nodeNew = nuke.createNode("BackdropNode")
-        nodeNew.setXpos(xpos)
-        nodeNew.setYpos(ypos+height+50)
-        height = nodeNew.screenHeight()
-        xpos = nodeNew.xpos()
-        ypos = nodeNew.ypos()
-    """
+            for n in bdNodes:
+                if n.ypos() > nodePrevY:
+                    n.setYpos(node.ypos() + (n.ypos() - nodePrevY))
+                else:
+                    n.setYpos(node.ypos() + (n.ypos() + nodePrevY))
+                if n.xpos() > nodePrevX:
+                    n.setXpos(node.xpos() + (n.xpos() - nodePrevX))
+                else:
+                    n.setXpos(node.xpos() + (n.xpos() + nodePrevX))
+
+        previousNode = node
 
     #save nuke script
     #nuke.scriptSave(outScript)
 
     #remove temp files
-
-def buildCompScript():
-    templates = getTemplateList()
-    width = node.screenWidth()
-    height = node.screenHeight()
-    xpos = node.xpos()
-    ypos = node.ypos()
-
-    for template in templates:
-        nuke.scriptReadFile(template)
-        nuke.selectAll()
-        node = nuke.selectedNodes("BackdropNode")[0]
-        nodeNew.setXpos(xpos)
-        nodeNew.setYpos(ypos + height + 50)
-        height = nodeNew.screenHeight()
-        xpos = nodeNew.xpos()
-        ypos = nodeNew.ypos()
-
-        width = node.screenWidth()
-        height = node.screenHeight()
-        xpos = node.xpos()
-        ypos = node.ypos()
-
-        # get nuke script to build
-        # nuke.scriptOpen(inScript)
-
-        # arrange templates in the given nuke script in vertical order
-
-        # save nuke script
-        # nuke.scriptSave(outScript)
-
-        # remove temp files
 
 buildCompScript()
