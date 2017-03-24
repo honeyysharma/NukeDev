@@ -69,12 +69,20 @@ def getTemplateList(layerOrderFile):
 
 #method to build comp script from the existing comp
 def buildCompScriptFromCurrentScript(isRunningFromScript):
-    pass
+    import nuke
+
+    currentCompScript = nuke.root().name()
+    currentDir = os.path.dirname(currentCompScript)
+    #instead get layer_order.yml from current dir
+    #if it doesn't exit else nuke.message
+    #else buildCompScript(layerOrderFile, currentCompScript, True)
+    layerOrderFile = currentDir + "\\" + "layer_order.yml"
 
 def buildCompScript(layerOrderFile, compScriptFile, isRunningFromScript):
 
     #imported nuke here as importing it outside was breaking argparse
-    import nuke
+    if not isRunningFromScript:
+        import nuke
 
     #kept here if script is run from the comp itself
     if not os.path.isfile(layerOrderFile):
