@@ -38,9 +38,6 @@ def getTemplateList(layerOrderFile):
         templateDict = yaml.load(stream)
 
     #static templates
-
-    #####Convert all the paths into macros#####
-
     mpaintTemplate = "C:\Users\priyansh shama\Documents\Nuke\Template\mpaint.nk"
     outputTemplate = "C:\Users\priyansh shama\Documents\Nuke\Template\output.nk"
 
@@ -70,16 +67,23 @@ def getTemplateList(layerOrderFile):
 
     return templateList
 
-#Should only accept shot path, layer order filename and comp script filename
-#and a flag to determine if script is running from the comp itself or command line.
-#example C:\Users\priyansh shama\Documents\Nuke\sq100\s10, layer_order.yml, comp.nk, isRunningFromScript
-def buildCompScript(layerOrderFile, compScriptFile):
+#method to build comp script from the existing comp
+def buildCompScriptFromCurrentScript(isRunningFromScript):
+    pass
+
+def buildCompScript(layerOrderFile, compScriptFile, isRunningFromScript):
 
     #imported nuke here as importing it outside was breaking argparse
     import nuke
 
-    # get nuke script to build
-    nuke.scriptOpen(compScriptFile)
+    #kept here if script is run from the comp itself
+    if not os.path.isfile(layerOrderFile):
+        print "Could not find layer_order.yml in " + shotDir
+        sys.exit()
+
+    if isRunningFromScript:
+        # get nuke script to build
+        nuke.scriptOpen(compScriptFile)
 
     # arrange templates in the given nuke script in vertical order
     templates = getTemplateList(layerOrderFile)
@@ -114,10 +118,16 @@ def buildCompScript(layerOrderFile, compScriptFile):
         previousNode = node
         previousDotNode = dotNode
 
-        # save nuke script
-        nuke.scriptSave(compScriptFile)
+        if isRunningFromScript:
+            #save nuke script
+            nuke.scriptSave(compScriptFile)
 
         # remove temp files
+        for template in templates:
+            if "temp" in template:
+                os.remove(template)
+
+        #[os.remove(template) for template in templates if "temp" in template]
 
 def main():
     #should take a sequence and a list of shots
@@ -135,49 +145,44 @@ def main():
     #check if sequence dir exists or not
     if args.sequence is not None:
         sqDir = prodDir + "\\" + "sq" + str(args.sequence)
-        print sqDir
 
-    if args.shots is not None:
-        shots = map(lambda x: "s"+str(x), args.shots)
-        print shots
+    if os.path.isdir(sqDir):
+        if args.shots is not None:
+            shots = map(lambda x: "s"+str(x), args.shots)
+        else:
+            #look for shot dirs in the sqDir, if nothing raise exception and exit
+            shots = [name for name in os.listdir(sqDir) if "s" in name]
+
+        for shot in shots:
+            shotDir = sqDir + "\\" + shot
+            #check if path exists or not
+            if os.path.isdir(shotDir):
+                # corret path to prodDir + sqDir + shotDir + layer_order.yml
+                if args.input is None:
+                    layerOrderFile = shotDir + "\\" + "layer_order.yml"
+                else:
+                    layerOrderFile = args.input
+
+                # correct path to prodDir + sqDir + shotDir + comp.nk
+                if args.comp is None:
+                    compScriptFile = shotDir + "\\" + "comp.nk"
+                else:
+                    compScriptFile = args.comp
+
+                if not os.path.isfile(compScriptFile):
+                    print "Could not find comp.nk in " + shotDir
+                    sys.exit()
+
+                print "------------- buildCompScript -----------"
+                print layerOrderFile
+                print compScriptFile
+                #buildCompScript(layerOrderFile, compScriptFile, False)
+            else:
+                print "The shot directory " + shot + " does not exists!"
+                sys.exit()
     else:
-        #look for shot dirs in the sqDir, if nothing raise exception and exit
-        pass
+        print "The sequence directory " + "sq" + str(args.sequence) + " does not exists!"
 
-    for shot in shots:
-        shotDir = sqDir + "\\" + shot
-        print shotDir
-        #check if path exists or not
-
-    #can be moved to buildCompScript() or inside above loop of shots
-    #corret path to prodDir + sqDir + shotDir + layer_order.yml
-    if args.input is None:
-        layerOrderFile = prodDir + "\\" + "layer_order.yml"
-    else:
-        layerOrderFile = args.input
-    if os.path.isfile(layerOrderFile):
-        print ("Input: %s" % layerOrderFile)
-    else:
-        print "The layer order file name is not valid"
-        sys.exit()
-
-    # corret path to prodDir + sqDir + shotDir + comp.nk
-    if args.comp is None:
-        compScriptFile = prodDir + "\\" + "comp.nk"
-    else:
-        compScriptFile = args.comp
-    if os.path.isfile(compScriptFile):
-        print ("Comp: %s" % compScriptFile)
-    else:
-        print "Comp script doesn't exists."
-        sys.exit()
-
-    print args.sequence
-    print args.shots
-
-    #buildCompScript(layerOrderFile, compScriptFile)
 
 if __name__ == "__main__":
     main()
-
-#Check if the given file paths exists or not
