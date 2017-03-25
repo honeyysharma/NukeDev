@@ -4,9 +4,7 @@ import fileinput
 import argparse
 import shutil
 import os.path
-
-
-# import nuke
+import nuke
 
 def importTemplate(templateName, templateType):
     templateDir = os.path.abspath("C:\Users\priyansh shama\Documents\Nuke\Template")
