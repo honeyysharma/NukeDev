@@ -4,10 +4,11 @@ import fileinput
 import argparse
 import shutil
 import os.path
-import nuke
+
+
+# import nuke
 
 def importTemplate(templateName, templateType):
-
     templateDir = os.path.abspath("C:\Users\priyansh shama\Documents\Nuke\Template")
 
     # set the script name according to template type
@@ -21,34 +22,33 @@ def importTemplate(templateName, templateType):
         file = templateDir + "\crowd.nk"
         tempFile = file.replace("crowd.nk", "temp_" + templateName + "_" + templateType + ".nk")
 
-
-    #copy the template file to a temp file
+    # copy the template file to a temp file
     shutil.copy(file, tempFile)
 
-    #open the script in the give path to replace the node name with template type
+    # open the script in the give path to replace the node name with template type
     # TEMPLATE_Read to ENVIR_Read
     for line in fileinput.input(tempFile, inplace=1):
         sys.stdout.write(line.replace("TEMPLATE", templateName))
 
-    #return temp file
+    # return temp file
     return tempFile
 
-def getTemplateList(layerOrderFile):
 
-    #open layer order file and store the output into a dictionary
+def getTemplateList(layerOrderFile):
+    # open layer order file and store the output into a dictionary
     with open(layerOrderFile, 'r') as stream:
         templateDict = yaml.load(stream)
 
-    #static templates
+    # static templates
     mpaintTemplate = "C:\Users\priyansh shama\Documents\Nuke\Template\mpaint.nk"
     outputTemplate = "C:\Users\priyansh shama\Documents\Nuke\Template\output.nk"
 
-    #list to collect all the templates
+    # list to collect all the templates
     templateList = []
 
     templateList.append(mpaintTemplate)
 
-    #dynamic templates
+    # dynamic templates
     if "Envir" in templateDict.keys():
         envirList = templateDict['Envir']
         if envirList:
@@ -74,9 +74,9 @@ def getTemplateList(layerOrderFile):
 
     return templateList
 
-#method to build comp script from the existing comp
-def buildCompScriptFromCurrentScript(isRunningFromScript):
 
+# method to build comp script from the existing comp
+def buildCompScriptFromCurrentScript():
     currentCompScript = nuke.root().name()
     currentDir = os.path.dirname(currentCompScript)
 
@@ -88,16 +88,19 @@ def buildCompScriptFromCurrentScript(isRunningFromScript):
     else:
         nuke.message("Could not find layer-order.yml in the current comp directory!")
 
-def buildCompScript(layerOrderFile, compScriptFile, isRunningFromScript):
 
-    #kept here if script is run from the comp itself
+def buildCompScript(layerOrderFile, compScriptFile, isRunningFromScript):
+    # kept here if script is run from the comp itself
     if not os.path.isfile(layerOrderFile):
         print "Could not find layer_order.yml in " + shotDir
         sys.exit()
 
     if not isRunningFromScript:
+        nuke.scriptClear()
         # get nuke script to build
         nuke.scriptOpen(compScriptFile)
+        nuke.selectAll()
+        [nuke.delete(node) for node in nuke.selectedNodes()]
 
     # arrange templates in the given nuke script in vertical order
     templates = getTemplateList(layerOrderFile)
@@ -134,32 +137,37 @@ def buildCompScript(layerOrderFile, compScriptFile, isRunningFromScript):
         previousDotNode = dotNode
 
     if not isRunningFromScript:
-        #save nuke script
+        # save nuke script
         nuke.scriptSave(compScriptFile)
+        # avoid opening GUI and getting extra nodes from previous script
+        nuke.scriptClose()
 
     # remove temp files
     [os.remove(template) for template in templates if "temp" in template]
 
+
 def main():
-    #should take a sequence and a list of shots
+    # should take a sequence and a list of shots
     prodDir = "C:\Users\priyansh shama\Documents\Nuke"
 
     parser = argparse.ArgumentParser("This scripts builds your comp script.")
 
-    #make it optional, should read from given shots' dir
-    parser.add_argument('-sq', '--sequence', help="Example: sq100 - The sequence for you want to build the script.", required=True)
-    parser.add_argument('-s', '--shots', nargs='*', help="Example: s10 s20 - The shots for you want to build the script.")
+    # make it optional, should read from given shots' dir
+    parser.add_argument('-sq', '--sequence', help="Example: sq100 - The sequence for you want to build the script.",
+                        required=True)
+    parser.add_argument('-s', '--shots', nargs='*',
+                        help="Example: s10 s20 - The shots for you want to build the script.")
     parser.add_argument('-i', '--input', help="Input Layer Order name")
     parser.add_argument('-c', '--comp', help="Optional input Comp Script name")
     args = parser.parse_args()
 
-    #check if sequence dir exists or not
+    # check if sequence dir exists or not
     if args.sequence is not None:
         sqDir = os.path.join(prodDir, str(args.sequence))
 
     if os.path.isdir(sqDir):
         if args.shots is None:
-            #look for shot dirs in the sqDir, if nothing raise exception and exit
+            # look for shot dirs in the sqDir, if nothing raise exception and exit
             shots = [name for name in os.listdir(sqDir) if "s" in name]
         else:
             shots = args.shots
@@ -170,7 +178,7 @@ def main():
         else:
             for shot in shots:
                 shotDir = os.path.join(sqDir, shot)
-                #check if path exists or not
+                # check if path exists or not
                 if os.path.isdir(shotDir):
                     # correct path to prodDir + sqDir + shotDir + layer_order.yml
                     if args.input is None:
