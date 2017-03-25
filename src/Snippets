@@ -1,0 +1,213 @@
+
+========================= NUKE CAMDEFOCUS ==============
+import nuke
+b=nuke.toNode('CamDefocus1')
+for i in range (b.getNumKnobs()):
+	ltc = b.knob (i)
+	if ltc.name() == "lock_to_camera":
+    	ltc.setValue(False)
+
+
+
+===============NUKE TEST TO CREATE AND CONNECT COUPLE OF NODES =================
+
+import nuke
+r1=nuke.nodes.AssetRead(asset = "SKIPPY", layer = "rndr", asset_path="/studio/penguins/pic/sq30/s41/r<res>/layer/<asset>/<asset>::<layer>%V/<asset>::<layer>%V.###.exr")
+r1['first'].setExpression('${a_firstfield}')
+r1['last'].setExpression('${a_lastfield}')
+r2=nuke.nodes.AssetRead(asset = "RICY", layer = "rndr", asset_path="/studio/penguins/pic/sq30/s41/r<res>/layer/<asset>/<asset>::<layer>%V/<asset>::<layer>%V.###.exr")
+r2['first'].setExpression('${a_firstfield}')
+r2['last'].setExpression('${a_lastfield}')
+f = nuke.nodes.FormatRes(inputs=[r1])
+b = nuke.nodes.Blur(inputs=[f], size = 2)
+a = nuke.nodes.AssetDiMattes(inputs=[b])
+m = nuke.nodes.Merge(inputs=[a,r2])
+v = nuke.nodes.Viewer()
+v.setInput(0,m)
+
+
+=========NUKE DI MATTES UPDATE==========
+
+import nuke
+b=nuke.toNode('CLIFF_AssetDiMattes')
+for i in range (b.getNumKnobs()):
+	ltc = b.knob (i)
+	if ltc.name() == "assetName":
+    	ltc.setValue("ICE_CLIFF")
+    	rules = b.knob("updateFromRules")
+    	rules.execute()
+
+=============NUKE OCEAN MPAINT CUTOUT=========
+
+import nuke
+for ocean in nuke.allNodes():
+	if 'Ocean_sq30' in ocean['name'].value():
+    	nodes = nuke.dependentNodes(nuke.INPUTS | nuke.HIDDEN_INPUTS,[ocean])
+    	if len(nodes) > 1:
+        	shuffle = nuke.nodes.Shuffle(inputs=[ocean])
+        	mpaint = nuke.toNode('mpaint')
+        	merge = nuke.nodes.Merge()
+        	di = nuke.toNode('MPAINT_AssetDiMattes')
+        	dot = nuke.nodes.Dot()
+    
+        	shuffle['xpos'].setValue(ocean['xpos'].value())
+        	shuffle['ypos'].setValue(ocean['ypos'].value() - 100)
+    
+    
+        	di['ypos'].setValue(mpaint['ypos'].value()+80)
+    
+        	merge.setInput(1,mpaint)
+        	merge['operation'].setValue('out')
+        	merge['xpos'].setValue(mpaint['xpos'].value())
+        	merge['ypos'].setValue(mpaint['ypos'].value() + 35)
+    
+        	di.setInput(0,merge)
+    
+        	dot['xpos'].setValue(ocean['xpos'].value())
+        	dot['ypos'].setValue(merge['ypos'].value())
+        	dot.setInput(0,shuffle)
+    
+        	merge.setInput(0,dot)
+
+================NUKE dependent nodes===========
+
+import nuke
+for ocean in nuke.allNodes():
+	if 'Ocean_sq30' in ocean['name'].value():
+    	nodes = nuke.dependentNodes(nuke.INPUTS | nuke.HIDDEN_INPUTS,[ocean])
+    	for i in nodes:
+        	i.setSelected(1)
+        	print i.name()
+
+============NUKE DI_MATTE_MNGR==========
+
+import nuke
+b=nuke.toNode('DI_MATTE_MNGR')
+for i in range (b.getNumKnobs()):
+	ltc = b.knob (i)
+	if ltc.name() == "custalph_16":
+    	b.knob(i+2). setValue("di_mattesC.blue")
+    	b.knob(i+3). setValue("minus")
+    	b.knob(i+4). setValue("di_mattesC.red")
+
+===========NUKE update CART di mattes==========
+
+import nuke
+b=nuke.toNode('CART_AssetDiMattes')
+for i in range (b.getNumKnobs()):
+	rules = b.knob("updateFromRules")
+	rules.execute()
+
+=================================================================================
+
+import nuke
+for node in nuke.allNodes():
+	for i in range (node.getNumKnobs()):
+    	knob = node.knob(i)
+    	if knob.name() == "assetName" and knob.value() == "CAPTSMEK":
+        	rules = node.knob("updateFromRules")
+        	rules.execute()
+
+=================================================================================
+
+import nuke
+for node in nuke.allNodes():
+	for i in range(node.getNumKnobs()):
+    	knob = node.knob(i)
+    	if knob.name() == "enabledimattes" and knob.value() == True:
+        	knob.setValue(0)
+        	print knob.name()
+        	print knob.value()
+
+
+==========NUKE CC_PANDA=======================
+
+import nuke
+cc = nuke.toNode("CC_PANDA")
+cc['disable'].setValue(False)
+for i in range (cc.getNumKnobs()):
+	knob = cc.knob(i)
+	if knob.name() == "midtones.gain":
+    	knob.setValue(0.9)
+    	print knob.value()
+
+===========NUKE Eyewhite_CC===============
+
+import nuke
+cc = nuke.toNode("Eyewhite_CC")
+for i in range (cc.getNumKnobs()):
+	knob = cc.knob(i)
+	if knob.name() == "highlights.gain":
+    	knob.setValue(0.8)
+
+============NUKE FORMAT RES UPDATE======
+
+import nuke
+for node in nuke.allNodes():
+	if 'FormatRes' in node['name'].value():
+    	for i in range (node.getNumKnobs()):
+        	if 'output' in node.knob(i).name() and node.knob(i).value() == 0.13:
+            	print node.knob(i).value()
+            	node.knob(i).setValue(0.09)
+            	print node.knob(i).value()
+
+======== NUKE DISABLE NODE ===========
+
+
+import nuke
+for node in nuke.allNodes():
+	if "eyeSpecReflection_CROWD_BABY_01" in node['name'].value():
+    	print node['name'].value()
+    	node['disable'].setValue(True)
+
+=================== NUKE SET DEEPREAD ON_ERROR TO BLACK ============
+
+import nuke
+for node in nuke.allNodes():
+	if "DeepRead" in node['name'].value():
+    	node['on_error'].setValue('black')
+
+
+=================== NUKE REMOVE ANIMATION FROM KNOB AND DISABLE ===============
+
+import nuke
+selectedNodes = nuke.selectedNodes()
+for node in selectedNodes:
+	print node['name'].value()
+	node['disable'].clearAnimated()
+	node['disable'].setValue(True)
+
+=================== NUKE UPDATE ASSETDIMATTES ==========================
+
+import nuke
+for node in nuke.allNodes("AssetDiMattes"):
+	rules = node.knob("updateFromRules")
+	rules.execute()
+
+
+============== NUKE PRINT DEPENDENCIES FILEPATHS FOR SELECTED NODES ==========
+selectedNode = nuke.selectedNode()
+#print a.Class()
+nodesToSelect = []
+
+nodesToSelect.append(selectedNode)
+#print nodesToSelect
+
+def climb(node):
+#print node.name()
+for n in node.dependencies():
+nodesToSelect.append(n)
+climb(n)
+
+climb(selectedNode)
+
+for node in nodesToSelect:
+nodeName = ""
+filePath = ""
+if node.Class() == "AOV_AssetDelivery2" and node.knob("file").value():
+print node.name()
+print node.knob("file").value()
+elif node.Class() == "AssetRead" and node.knob("asset_path").value():
+print node.name()
+print node.knob("asset_path").value()
+
