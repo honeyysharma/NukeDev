@@ -1,0 +1,36 @@
+set cut_paste_input [stack 0]
+version 11.2 v4
+push $cut_paste_input
+push 0
+add_layer {key__specular_direct key__specular_direct.red key__specular_direct.green key__specular_direct.blue}
+add_layer {key__specular_indirect key__specular_indirect.red key__specular_indirect.green key__specular_indirect.blue}
+Merge2 {
+ inputs 2
+ operation plus
+ bbox B
+ Achannels key__specular_direct
+ Bchannels key__specular_indirect
+ output rgb
+ name Merge5
+ selected true
+ xpos 459
+ ypos -2
+}
+add_layer {specular other.red other.green other.blue other.alpha}
+Shuffle {
+ alpha black
+ out specular
+ name Shuffle5
+ selected true
+ xpos 459
+ ypos 35
+}
+Remove {
+ operation keep
+ channels rgb
+ channels2 {other.red other.green other.blue none}
+ name Remove_key_specular
+ selected true
+ xpos 459
+ ypos 70
+}
